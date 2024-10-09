@@ -1397,7 +1397,7 @@ std::string Kernel::getStringHash(const StringRef str) {
     uint32_t digest[5]; // 160 bits in total
     boost::uuids::detail::sha1 sha1;
     sha1.process_bytes(str.data(), str.size());
-    sha1.get_digest(digest);
+    sha1.get_digest(reinterpret_cast<unsigned char(&)[20]>(digest));
 
     std::string buffer;
     buffer.reserve((5 * 8) + 1);
