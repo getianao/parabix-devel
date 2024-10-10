@@ -101,6 +101,21 @@ void pablo_function_passes(PabloKernel * kernel) {
             PabloOptimizedOutputFileFlag = sys::fs::OpenFlags::OF_Append;  // append subsequent Pablo kernels
         }
     }
+    if (ShowOptimizedPabloGPUOption != codegen::OmittedOption) {
+      if (kernel->getName().starts_with("ic")) {
+        if (ShowOptimizedPabloGPUOption.empty()) {
+          // Print to the terminal the final Pablo AST after optimization.
+          errs() << "### Final Pablo GPU AST ###\n";
+          PabloPrinter::print_gpu(kernel, errs());
+        } else {
+          std::error_code error;
+          llvm::raw_fd_ostream out(ShowOptimizedPabloGPUOption, error,
+                                   PabloOptimizedGPUOutputFileFlag);
+          PabloPrinter::print_gpu(kernel, out);
+          PabloOptimizedGPUOutputFileFlag =
+              sys::fs::OpenFlags::OF_Append; // append subsequent Pablo kernels
+        }
+      }
+    }
 }
-
 }

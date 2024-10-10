@@ -39,6 +39,12 @@ static cl::opt<std::string, true> OptimizedPabloOutputOption("ShowOptimizedPablo
                                                     cl::desc("Print optimized Pablo code to stderr (by omitting =<filename>) or a file"), cl::value_desc("filename"), cl::cat(PabloOptions));
 sys::fs::OpenFlags PabloOptimizedOutputFileFlag = sys::fs::OpenFlags::OF_None;
 
+std::string ShowOptimizedPabloGPUOption = codegen::OmittedOption;
+static cl::opt<std::string, true> OptimizedPabloGPUOutputOption("ShowOptimizedPabloGPU", cl::location(ShowOptimizedPabloGPUOption), cl::ValueOptional,
+                                                    cl::desc("Print optimized Pablo GPU code to stderr (by omitting =<filename>) or a file"), cl::value_desc("filename"), cl::cat(PabloOptions));
+
+sys::fs::OpenFlags PabloOptimizedGPUOutputFileFlag = sys::fs::OpenFlags::OF_None;
+
 static cl::bits<PabloCompilationFlags> 
     PabloOptimizationsOptions(cl::values(clEnumVal(Flatten, "Flatten all the Ifs in the Pablo AST"),
                                          clEnumVal(DisableSimplification, "Disable Pablo Simplification pass (not recommended)"),

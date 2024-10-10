@@ -16,6 +16,7 @@ enum PabloDebugFlags {
     VerifyPablo, DumpTrace
 };
 extern std::string ShowOptimizedPabloOption;
+extern std::string ShowOptimizedPabloGPUOption;
 extern std::string ShowPabloOption;
 
 enum PabloCompilationFlags {
@@ -44,6 +45,7 @@ std::string BitMovementMode_string(BitMovementMode m);
 
 extern llvm::sys::fs::OpenFlags PabloOutputFileFlag;
 extern llvm::sys::fs::OpenFlags PabloOptimizedOutputFileFlag;
+extern llvm::sys::fs::OpenFlags PabloOptimizedGPUOutputFileFlag;
 
 extern std::string PabloIllustrateBitstreamRegEx;
 
