@@ -369,7 +369,8 @@ static std::string getGPUInst(uint32_t n_inst, std::string operation,
   uint32_t operand1_idx, dest_idx;
 
   // operands
-  if (operand1.find("UTF8_basis") != std::string::npos) {
+  if (operand1.find("UTF8_basis") != std::string::npos ||
+      operand1.find("Byte_basis") != std::string::npos) {
     is_bs_basic1 = true;
     operand1_idx = std::stoi(operand1.substr(operand1.find('[') + 1));
   } else {
@@ -416,7 +417,8 @@ static std::string getGPUInst(uint32_t n_inst, std::string operation,
   if (operation == "IF") {
     uint32_t operand1_idx;
     bool is_bs_basic1 = false;
-    if (operand1.find("UTF8_basis") != std::string::npos) {
+    if (operand1.find("UTF8_basis") != std::string::npos ||
+      operand1.find("Byte_basis") != std::string::npos) {
       is_bs_basic1 = true;
       operand1_idx = std::stoi(operand1.substr(operand1.find('[') + 1));
     } else {
@@ -435,7 +437,8 @@ static std::string getGPUInst(uint32_t n_inst, std::string operation,
   uint32_t operand1_idx, operand2_idx, dest_idx;
 
   // operands
-  if (operand1.find("UTF8_basis") != std::string::npos) {
+  if (operand1.find("UTF8_basis") != std::string::npos ||
+      operand1.find("Byte_basis") != std::string::npos) {
     is_bs_basic1 = true;
     operand1_idx = std::stoi(operand1.substr(operand1.find('[') + 1));
   } else {
@@ -445,7 +448,8 @@ static std::string getGPUInst(uint32_t n_inst, std::string operation,
     }
     operand1_idx = map_variable[operand1];
   }
-  if (operand2.find("UTF8_basis") != std::string::npos) {
+  if (operand2.find("UTF8_basis") != std::string::npos ||
+      operand2.find("Byte_basis") != std::string::npos) {
     is_bs_basic2 = true;
     operand2_idx = std::stoi(operand2.substr(operand2.find('[') + 1));
   } else {
@@ -762,47 +766,13 @@ void PabloPrinter::print_gpu(PabloBlock const *block, raw_ostream &out,
 void PabloPrinter::print_gpu(PabloKernel const *kernel,
                              raw_ostream &out) noexcept {
   uint32_t n_inst = 0;
-  auto kernelName = printKernelNameAnnotations(kernel->getName(), out);
-  out << "kernel " << kernelName << " :: ";
-  out << "[";
-  for (size_t i = 0; i < kernel->getInputStreamSetBindings().size(); ++i) {
-    if (i)
-      out << ", ";
-    auto const &streamBinding = kernel->getInputStreamSetBinding(i);
-    uint32_t numStreams = streamBinding.getNumElements();
-    uint32_t fw = streamBinding.getFieldWidth();
-    out << "<i" << fw << ">[" << numStreams << "] ";
-    out << streamBinding.getName();
-  }
-  for (auto const &scalarBinding : kernel->getInputScalarBindings()) {
-    out << *scalarBinding.getType();
-  }
-
-  out << "] -> [";
-
-  for (size_t i = 0; i < kernel->getOutputStreamSetBindings().size(); ++i) {
-    if (i)
-      out << ", ";
-    auto const &streamBinding = kernel->getOutputStreamSetBinding(i);
-    uint32_t numStreams = streamBinding.getNumElements();
-    uint32_t fw = streamBinding.getFieldWidth();
-    out << "<i" << fw << ">[" << numStreams << "] ";
-    out << streamBinding.getName();
-  }
-  for (auto const &scalarBinding : kernel->getOutputScalarBindings()) {
-    out << *scalarBinding.getType() << " " << scalarBinding.getName();
-  }
-
-  out << "] {\n";
   std::map<std::string, uint32_t> map_variable;
-  // init map_variable
   map_variable["<0>"] = 0U;
   map_variable["<1>"] = 1U;
   map_variable["mBarrier[0]"] = 2U;
 
   print_gpu(kernel->getEntryScope(), out, n_inst, map_variable, true,
             INDENT_WIDTH);
-  out << "}\n\n";
 }
 
 } // namespace pablo
