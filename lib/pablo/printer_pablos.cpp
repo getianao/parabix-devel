@@ -408,7 +408,16 @@ static std::string getGPUInst(uint32_t n_inst, std::string operation,
                                operand1);
     }
     uint32_t operand1_idx = map_variable[operand1];
-    uint32_t dest_idx = alias(operand1, dest, map_variable);
+    // dest
+    uint32_t dest_idx;
+    if (map_variable.find(dest) != map_variable.end()) {
+      errs() << "Warning: dest variable already exists: " << dest << "\n";
+      dest_idx = map_variable[dest];
+    } else {
+      dest_idx = map_variable.size();
+      map_variable[dest] = dest_idx;
+      // printf(" insert %s %d\n", dest.c_str(), dest_idx);
+    }
     return std::format("ri[{0}].init(Re_Inst::{1}, {2}, {3}, {4}, {5}, {6});",
                        n_inst, operation, operand1_idx, operand2, dest_idx,
                        false, false);
