@@ -629,7 +629,6 @@ static void PrintStatementGPU(Statement const *stmt, raw_ostream &out,
       operand2 = getOperandName(xorNode->getOperand(1));
       out << getGPUInst(n_inst, "XOR", operand1, operand2, dest, map_variable);
     } else if (const Sel *selNode = dyn_cast<Sel>(stmt)) {
-      throw std::runtime_error("Sel operation not supported in GPU");
       out << "Sel(";
       PrintExpression(selNode->getCondition(), out);
       out << ", ";
@@ -637,6 +636,7 @@ static void PrintStatementGPU(Statement const *stmt, raw_ostream &out,
       out << ", ";
       PrintExpression(selNode->getFalseExpr(), out);
       out << ")";
+      throw std::runtime_error("Sel operation not supported in GPU");
     } else if (const Not *notNode = dyn_cast<Not>(stmt)) {
       std::string operand1;
       operand1 = getOperandName(notNode->getExpr());
@@ -649,6 +649,7 @@ static void PrintStatementGPU(Statement const *stmt, raw_ostream &out,
         PrintExpression(call->getOperand(i), out);
       }
       out << ")";
+      throw std::runtime_error("IntrinsicCall operation not supported in GPU");
     } else if (const Advance *adv = dyn_cast<Advance>(stmt)) {
 
       std::string operand1, operand2;
@@ -661,28 +662,33 @@ static void PrintStatementGPU(Statement const *stmt, raw_ostream &out,
       out << ", ";
       PrintExpression(adv->getIndex(), out);
       out << ", " << std::to_string(adv->getAmount()) << ")";
+      throw std::runtime_error("operation not supported in GPU");
     } else if (const Lookahead *adv = dyn_cast<Lookahead>(stmt)) {
       out << "Lookahead(";
       PrintExpression(adv->getExpression(), out);
       out << ", " << std::to_string(adv->getAmount()) << ")";
+      throw std::runtime_error("Lookahead operation not supported in GPU");
     } else if (const MatchStar *mstar = dyn_cast<MatchStar>(stmt)) {
       out << "MatchStar(";
       PrintExpression(mstar->getMarker(), out);
       out << ", ";
       PrintExpression(mstar->getCharClass(), out);
       out << ")";
+      throw std::runtime_error("MatchStar operation not supported in GPU");
     } else if (const ScanThru *sthru = dyn_cast<ScanThru>(stmt)) {
       out << "ScanThru(";
       PrintExpression(sthru->getScanFrom(), out);
       out << ", ";
       PrintExpression(sthru->getScanThru(), out);
       out << ")";
+      throw std::runtime_error("ScanThru operation not supported in GPU");
     } else if (const ScanTo *sto = dyn_cast<ScanTo>(stmt)) {
       out << "ScanTo(";
       PrintExpression(sto->getScanFrom(), out);
       out << ", ";
       PrintExpression(sto->getScanTo(), out);
       out << ")";
+      throw std::runtime_error("ScanTo operation not supported in GPU");
     } else if (const AdvanceThenScanThru *sthru =
                    dyn_cast<AdvanceThenScanThru>(stmt)) {
       out << "AdvanceThenScanThru(";
@@ -690,6 +696,7 @@ static void PrintStatementGPU(Statement const *stmt, raw_ostream &out,
       out << ", ";
       PrintExpression(sthru->getScanThru(), out);
       out << ")";
+      throw std::runtime_error("AdvanceThenScanThru operation not supported in GPU");
     } else if (const AdvanceThenScanTo *sto =
                    dyn_cast<AdvanceThenScanTo>(stmt)) {
       out << "AdvanceThenScanTo(";
@@ -697,6 +704,7 @@ static void PrintStatementGPU(Statement const *stmt, raw_ostream &out,
       out << ", ";
       PrintExpression(sto->getScanTo(), out);
       out << ")";
+      throw std::runtime_error("AdvanceThenScanTo operation not supported in GPU");
     } else if (const Ternary *tern = dyn_cast<Ternary>(stmt)) {
       out << "Ternary(";
       out.write_hex(tern->getMask()->value());
@@ -707,10 +715,12 @@ static void PrintStatementGPU(Statement const *stmt, raw_ostream &out,
       out << ", ";
       PrintExpression(tern->getC(), out);
       out << ")";
+      throw std::runtime_error("Ternary operation not supported in GPU");
     } else if (const Count *count = dyn_cast<Count>(stmt)) {
       out << "Count(";
       PrintExpression(count->getExpr(), out);
       out << ")";
+      throw std::runtime_error("Count operation not supported in GPU");
     } else if (const Repeat *splat = dyn_cast<Repeat>(stmt)) {
       out << "Repeat(";
       PrintExpression(splat->getFieldWidth(), out);
@@ -719,22 +729,26 @@ static void PrintStatementGPU(Statement const *stmt, raw_ostream &out,
       out << "Int" << fw << "(";
       PrintExpression(splat->getValue(), out);
       out << "))";
+      throw std::runtime_error("Repeat operation not supported in GPU");
     } else if (const PackH *p = dyn_cast<PackH>(stmt)) {
       out << " = PackH(";
       PrintExpression(p->getFieldWidth(), out);
       out << ", ";
       PrintExpression(p->getValue(), out);
       out << ")";
+      throw std::runtime_error("PackH operation not supported in GPU");
     } else if (const PackL *p = dyn_cast<PackL>(stmt)) {
       out << " = PackL(";
       PrintExpression(p->getFieldWidth(), out);
       out << ", ";
       PrintExpression(p->getValue(), out);
       out << ")";
+      throw std::runtime_error("PackL operation not supported in GPU");
     } else if (const DebugPrint *e = dyn_cast<DebugPrint>(stmt)) {
       out << "DebugPrint(";
       PrintExpression(e->getExpr(), out);
       out << ")";
+      throw std::runtime_error("DebugPrint operation not supported in GPU");
     } else if (const InFile *e = dyn_cast<InFile>(stmt)) {
       alias(getOperandName(e->getExpr()), getOperandName(stmt), map_variable);
       n_inst--;
@@ -742,18 +756,22 @@ static void PrintStatementGPU(Statement const *stmt, raw_ostream &out,
       out << "AtEOF(";
       PrintExpression(e->getExpr(), out);
       out << ")";
+      throw std::runtime_error("AtEOF operation not supported in GPU");
     } else if (const TerminateAt *s = dyn_cast<TerminateAt>(stmt)) {
       out << "TerminateAt(";
       PrintExpression(s->getExpr(), out);
       out << ", " << std::to_string(s->getSignalCode()) << ")";
+      throw std::runtime_error("TerminateAt operation not supported in GPU");
     } else if (const EveryNth *e = dyn_cast<EveryNth>(stmt)) {
       out << "EveryNth(";
       out << e->getN()->value();
       out << ", ";
       PrintExpression(e->getExpr(), out);
       out << ")";
+      throw std::runtime_error("EveryNth operation not supported in GPU");
     } else {
       out << "???";
+      throw std::runtime_error("??? operation not supported in GPU");
     }
 
     out << "\n";
