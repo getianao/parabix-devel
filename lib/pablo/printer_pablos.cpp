@@ -394,6 +394,51 @@ static std::string getGPUInst(uint32_t n_inst, std::string operation,
                      operation, operand1_idx, dest_idx, is_bs_basic1);
 }
 
+// SEL
+static std::string getGPUInst(uint32_t n_inst, std::string operation,
+                              std::string operand1, std::string operand2,
+                              std::string operand3, std::string dest,
+                              std::map<std::string, uint32_t> &map_variable) {
+  bool is_bs_basic1 = false;
+  bool is_bs_basic2 = false;
+  bool is_bs_basic3 = false;
+  uint32_t operand1_idx, operand2_idx, operand3_idx, dest_idx;
+
+  auto get_operand_idx = [&](std::string operand, uint32_t &operand_idx,
+                             bool &is_bs_basic) {
+    if (operand.find("UTF8_basis") != std::string::npos ||
+        operand.find("Byte_basis") != std::string::npos) {
+      is_bs_basic = true;
+      operand_idx = std::stoi(operand.substr(operand.find('[') + 1));
+    } else {
+      if (map_variable.find(operand) == map_variable.end()) {
+        throw std::runtime_error("Error: operand variable not found: " +
+                                 operand);
+      }
+      operand_idx = map_variable[operand];
+    }
+  };
+
+  // operands
+  get_operand_idx(operand1, operand1_idx, is_bs_basic1);
+  get_operand_idx(operand2, operand2_idx, is_bs_basic2);
+  get_operand_idx(operand3, operand3_idx, is_bs_basic3);
+
+  // dest
+  if (map_variable.find(dest) != map_variable.end()) {
+    errs() << "Warning: dest variable already exists: " << dest << "\n";
+    dest_idx = map_variable[dest];
+  } else {
+    dest_idx = map_variable.size();
+    map_variable[dest] = dest_idx;
+    // printf(" insert %s %d\n", dest.c_str(), dest_idx);
+  }
+  return std::format(
+      "ri[{0}].init(Re_Inst::{1}, {2}, {3}, {4}, {5}, {6}, {7}, {8});", n_inst,
+      operation, operand1_idx, operand2_idx, operand3_idx, is_bs_basic1,
+      is_bs_basic2, is_bs_basic3, dest_idx);
+}
+
 static std::string getGPUInst(uint32_t n_inst, std::string operation,
                               std::string operand1, std::string operand2,
                               std::string dest,
@@ -403,11 +448,19 @@ static std::string getGPUInst(uint32_t n_inst, std::string operation,
   // false);')
 
   if (operation == "ADVANCE") {
-    if (map_variable.find(operand1) == map_variable.end()) {
-      throw std::runtime_error("Error: operand1 variable not found: " +
-                               operand1);
+    uint32_t operand1_idx;
+    bool is_bs_basic1 = false;
+    if (operand1.find("UTF8_basis") != std::string::npos ||
+        operand1.find("Byte_basis") != std::string::npos) {
+      is_bs_basic1 = true;
+      operand1_idx = std::stoi(operand1.substr(operand1.find('[') + 1));
+    } else {
+      if (map_variable.find(operand1) == map_variable.end()) {
+        throw std::runtime_error("Error: operand1 variable not found: " +
+                                 operand1);
+      }
+      operand1_idx = map_variable[operand1];
     }
-    uint32_t operand1_idx = map_variable[operand1];
     // dest
     uint32_t dest_idx;
     if (map_variable.find(dest) != map_variable.end()) {
@@ -418,9 +471,9 @@ static std::string getGPUInst(uint32_t n_inst, std::string operation,
       map_variable[dest] = dest_idx;
       // printf(" insert %s %d\n", dest.c_str(), dest_idx);
     }
-    return std::format("ri[{0}].init(Re_Inst::{1}, {2}, {3}, {4}, {5}, {6});",
-                       n_inst, operation, operand1_idx, operand2, dest_idx,
-                       false, false);
+    return std::format("ri[{0}].init(Re_Inst::{1}, {2}, {3}, {4}, {5});",
+                       n_inst, operation, operand1_idx, is_bs_basic1, operand2,
+                       dest_idx);
   }
 
   if (operation == "IF") {
@@ -629,14 +682,12 @@ static void PrintStatementGPU(Statement const *stmt, raw_ostream &out,
       operand2 = getOperandName(xorNode->getOperand(1));
       out << getGPUInst(n_inst, "XOR", operand1, operand2, dest, map_variable);
     } else if (const Sel *selNode = dyn_cast<Sel>(stmt)) {
-      out << "Sel(";
-      PrintExpression(selNode->getCondition(), out);
-      out << ", ";
-      PrintExpression(selNode->getTrueExpr(), out);
-      out << ", ";
-      PrintExpression(selNode->getFalseExpr(), out);
-      out << ")";
-      throw std::runtime_error("Sel operation not supported in GPU");
+      std::string operand1, operand2, operand3;
+      operand1 = getOperandName(selNode->getCondition());
+      operand2 = getOperandName(selNode->getTrueExpr());
+      operand3 = getOperandName(selNode->getFalseExpr());
+      out << getGPUInst(n_inst, "SEL", operand1, operand2, operand3, dest,
+                        map_variable);
     } else if (const Not *notNode = dyn_cast<Not>(stmt)) {
       std::string operand1;
       operand1 = getOperandName(notNode->getExpr());
@@ -651,7 +702,6 @@ static void PrintStatementGPU(Statement const *stmt, raw_ostream &out,
       out << ")";
       throw std::runtime_error("IntrinsicCall operation not supported in GPU");
     } else if (const Advance *adv = dyn_cast<Advance>(stmt)) {
-
       std::string operand1, operand2;
       operand1 = getOperandName(adv->getExpression());
       operand2 = std::to_string(adv->getAmount());
@@ -669,12 +719,10 @@ static void PrintStatementGPU(Statement const *stmt, raw_ostream &out,
       out << ", " << std::to_string(adv->getAmount()) << ")";
       throw std::runtime_error("Lookahead operation not supported in GPU");
     } else if (const MatchStar *mstar = dyn_cast<MatchStar>(stmt)) {
-      out << "MatchStar(";
-      PrintExpression(mstar->getMarker(), out);
-      out << ", ";
-      PrintExpression(mstar->getCharClass(), out);
-      out << ")";
-      throw std::runtime_error("MatchStar operation not supported in GPU");
+      std::string operand1, operand2;
+      operand1 = getOperandName(mstar->getMarker());
+      operand2 = getOperandName(mstar->getCharClass());
+      out << getGPUInst(n_inst, "MATCHSTAR", operand1, operand2, dest, map_variable);
     } else if (const ScanThru *sthru = dyn_cast<ScanThru>(stmt)) {
       out << "ScanThru(";
       PrintExpression(sthru->getScanFrom(), out);
@@ -797,6 +845,7 @@ void PabloPrinter::print_gpu(PabloKernel const *kernel,
   map_variable["<0>"] = 0U;
   map_variable["<1>"] = 1U;
   map_variable["mBarrier[0]"] = 2U;
+  map_variable["mIndexing[0]"] = 3U;
 
   print_gpu(kernel->getEntryScope(), out, n_inst, map_variable, true,
             INDENT_WIDTH);
