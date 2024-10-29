@@ -24,6 +24,13 @@ public:
     static void print_vars(const DefinedVars & vars, std::string indent, std::ostream & strm);
     static void print(const pablo::PabloAST * expr, std::ostream & strm);
     static void print(const pablo::Statement *stmt, std::string indent, std::ostream & strm);
+
+    static void printGPU(const pablo::PabloBlock & block, std::ostream & strm);
+    static void printGPU(const pablo::StatementList & stmts, std::ostream & strm);
+    static void printGPU(const pablo::StatementList & stmts, std::string indent, std::ostream & strm);
+    static void printGPU_vars(const DefinedVars & vars, std::string indent, std::ostream & strm);
+    static void printGPU(const pablo::PabloAST * expr, std::ostream & strm);
+    static void printGPU(const pablo::Statement *stmt, std::string indent, std::ostream & strm);
 };
 
 #endif // SHOW_H
