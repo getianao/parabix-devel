@@ -169,7 +169,7 @@ void RE_Compiler::finalizeMatchResult(MarkerType match_result) {
     //These three lines are specifically for grep.
     PabloAST * lb = UNICODE_LINE_BREAK ? mUnicodeLineBreak : mLineFeed;
     PabloAST * v = markerVar(match_result);
-    mPB.createAssign("matches", v);
+    mPB.createAssign("matches", v, 0);
     // mPB.createAssign("matches", mPB.createAnd(mPB.createMatchStar(v, mPB.createNot(lb)), lb), 0);
     // mPB.createAssign("lf", mPB.createAnd(lb, mPB.createNot(mCRLF)), 1);
 }

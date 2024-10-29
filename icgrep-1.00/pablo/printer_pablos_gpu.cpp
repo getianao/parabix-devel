@@ -229,6 +229,9 @@ void PabloPrinter::printGPU(const Statement * stmt, std::string indent, std::ost
     else if (const Assign * an = dyn_cast<const Assign>(stmt)) {
       std::string operand1, dest;
       dest = getExprName(an);
+      if (an->isOutputAssignment()) {
+        dest = "output." + dest;
+      }
       operand1 = getExprName(an->getExpr());
 
       strm << getGPUInst(n_inst, "ASSIGN", operand1, dest, map_variable);
