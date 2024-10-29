@@ -10,6 +10,7 @@
 #include <pablo/pabloAST.h>
 #include <pablo/ps_if.h>
 #include <string>
+#include <map>
 
 namespace pablo {
     class PabloBlock;
@@ -31,6 +32,10 @@ public:
     static void printGPU_vars(const DefinedVars & vars, std::string indent, std::ostream & strm);
     static void printGPU(const pablo::PabloAST * expr, std::ostream & strm);
     static void printGPU(const pablo::Statement *stmt, std::string indent, std::ostream & strm);
+    static std::string getExprName(const pablo::PabloAST *node);
+
+    static int n_inst;
+    static std::map<std::string, uint32_t> map_variable;
 };
 
 #endif // SHOW_H
