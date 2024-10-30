@@ -315,22 +315,21 @@ void PabloPrinter::printGPU(const Statement * stmt, std::string indent, std::ost
       operand1 = getExprName(adv->getExpr());
       operand2 = std::to_string(adv->getAdvanceAmount());
       strm << getGPUInst(n_inst, "ADVANCE", operand1, operand2, dest, map_variable);
-       n_inst++;
+      n_inst++;
     } else if (const MatchStar *mstar = dyn_cast<const MatchStar>(stmt)) {
       std::string operand1, operand2, dest;
       dest = getExprName(mstar);
       operand1 = getExprName(mstar->getMarker());
       operand2 = getExprName(mstar->getCharClass());
       strm << getGPUInst(n_inst, "MATCHSTAR", operand1, operand2, dest, map_variable);
-       n_inst++;
+      n_inst++;
     } else if (const ScanThru *sthru = dyn_cast<const ScanThru>(stmt)) {
-      print(sthru, strm);
-      strm << " = pablo.ScanThru(";
-      print(sthru->getScanFrom(), strm);
-      strm << ", ";
-      print(sthru->getScanThru(), strm);
-      strm << ")";
-      throw std::runtime_error("Error: ScanThru not supported");
+      std::string operand1, operand2, dest;
+      dest = getExprName(sthru);
+      operand1 = getExprName(sthru->getScanFrom());
+      operand2 = getExprName(sthru->getScanThru());
+      strm << getGPUInst(n_inst, "SCANTHRU", operand1, operand2, dest, map_variable);
+      n_inst++;
     } else {
       strm << indent << "**UNKNOWN Pablo Statement type **" << std::endl;
     }
