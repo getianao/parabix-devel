@@ -23,6 +23,7 @@
 
 #include <assert.h>
 #include <stdexcept>
+#include <iostream>
 
 #include "llvm/Support/CommandLine.h"
 cl::OptionCategory fREcompilationOptions("Regex Compilation Options",
@@ -85,6 +86,14 @@ void RE_Compiler::AlignMarkers(MarkerType & m1, MarkerType & m2, PabloBlock & pb
 
 
 void RE_Compiler::initializeRequiredStreams(cc::CC_Compiler & ccc) {
+
+    mLineFeed = ccc.compileCC(makeCC(0x0));
+    mCRLF = ccc.compileCC(makeCC(0x0));
+    mUnicodeLineBreak = ccc.compileCC(makeCC(0x0));
+    mInitial = ccc.compileCC(makeCC(0x0));
+    mNonFinal = ccc.compileCC(makeCC(0x0));
+    mFinal = ccc.compileCC(makeCC(0x0));
+    return;
 
     Assign * LF = mPB.createAssign("LF", ccc.compileCC(makeCC(0x0A)));
     mLineFeed = LF;
