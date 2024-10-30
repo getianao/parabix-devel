@@ -308,7 +308,7 @@ void GrepExecutor::doGrep(const std::string infilename) {
         if (mShowFileNameOption) {
             std::cout << mFileName;
         }
-        std::cout << match_count << std::endl;
+        std::cout << "match_count: " << match_count << std::endl;
     }
     else
     {
