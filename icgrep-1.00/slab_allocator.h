@@ -19,7 +19,7 @@ public:
     }
     static inline void Reset() {
         #ifndef NDEBUG
-        mAllocator.PrintStats();
+        // mAllocator.PrintStats();
         #endif
         mAllocator.Reset();
     }

@@ -17,6 +17,7 @@
 #include <re/parsefailure.h>
 #include <UCD/CaseFolding_txt.h>
 #include <algorithm>
+#include <iostream>
 
 
 // It would probably be best to enforce that {}, [], () must always
@@ -356,7 +357,8 @@ unsigned RE_Parser::parse_int() {
 
 #define bit40(x) (1ULL << ((x) - 0x40))
 const uint64_t setEscapeCharacters = bit40('b') | bit40('p') | bit40('d') | bit40('w') | bit40('s') | 
-                                     bit40('B') | bit40('P') | bit40('D') | bit40('W') | bit40('S');
+                                     bit40('B') | bit40('P') | bit40('D') | bit40('W') | bit40('S') |
+                                     bit40('h');
 
 inline bool isSetEscapeChar(char c) {
     return c >= 0x40 && c <= 0x7F && ((setEscapeCharacters >> (c - 0x40)) & 1) == 1;
@@ -402,30 +404,79 @@ RE * RE_Parser::parse_escaped_set() {
     bool complemented = false;
     RE * s;
     switch (*_cursor) {
-        case 'b':
+        case 'b': {
             ++_cursor;
-            return makeWordBoundary();
+            cursor_t new_cursor = _cursor;
+            std::string escape = "[\x08]";
+            _cursor = escape.begin() + 1;
+            RE *r = parse_charset();
+            _cursor = new_cursor;
+            return r;
+            // return makeWordBoundary();
+        }
         case 'B':
             ++_cursor;
             return makeWordNonBoundary();
-        case 'd':
-            ++_cursor;
-            return makeDigitSet();
-        case 'D':
-            ++_cursor;
-            return makeComplement(makeDigitSet());
-        case 's':
-            ++_cursor;
-            return makeWhitespaceSet();
-        case 'S':
-            ++_cursor;
-            return makeComplement(makeWhitespaceSet());
-        case 'w':
-            ++_cursor;
-            return makeWordSet();
-        case 'W':
-            ++_cursor;
-            return makeComplement(makeWordSet());
+        case 'd': {
+          ++_cursor;
+          cursor_t new_cursor = _cursor;
+          std::string whitespace = "[0-9]";
+          _cursor = whitespace.begin() + 1;
+          RE *r = parse_charset();
+          _cursor = new_cursor;
+          return r;
+          // return makeDigitSet();
+        }
+        case 'D': {
+          ++_cursor;
+          cursor_t new_cursor = _cursor;
+          std::string whitespace = "[0-9]";
+          _cursor = whitespace.begin() + 1;
+          RE *r = parse_charset();
+          _cursor = new_cursor;
+          return makeComplement(r);
+          // return makeComplement(makeDigitSet());
+        }
+        case 's': {
+          ++_cursor;
+          cursor_t new_cursor = _cursor;
+          std::string whitespace = "[\x09-\x0d\x20]";
+          _cursor = whitespace.begin() + 1;
+          RE *r = parse_charset();
+          _cursor = new_cursor;
+          return r;
+          //   return makeWhitespaceSet();
+        }
+        case 'S': {
+          ++_cursor;
+          cursor_t new_cursor = _cursor;
+          std::string whitespace = "[\x09-\x0d\x20]";
+          _cursor = whitespace.begin() + 1;
+          RE *r = parse_charset();
+          _cursor = new_cursor;
+          return makeComplement(r);
+          // return makeComplement(makeWhitespaceSet());
+        }
+        case 'w': {
+          ++_cursor;
+          cursor_t new_cursor = _cursor;
+          std::string escape = "[\x30-\x39\x41-\x5a\x5f\x61-\x7a]";
+          _cursor = escape.begin() + 1;
+          RE *r = parse_charset();
+          _cursor = new_cursor;
+          return r;
+          // return makeWordSet();
+        }
+        case 'W': {
+          ++_cursor;
+          cursor_t new_cursor = _cursor;
+          std::string escape = "[\x30-\x39\x41-\x5a\x5f\x61-\x7a]";
+          _cursor = escape.begin() + 1;
+          RE *r = parse_charset();
+          _cursor = new_cursor;
+          return makeComplement(r);
+          //   return makeComplement(makeWordSet());
+        }
         case 'P':
             complemented = true;
         case 'p':
@@ -437,9 +488,18 @@ RE * RE_Parser::parse_escaped_set() {
             ++_cursor;
             if (complemented) return makeComplement(s);
             else return s;
+        case 'h':{
+          ++_cursor;
+          cursor_t new_cursor = _cursor;
+          std::string escape = "[\x09\x20]"; // [\x09\x20\xa0]
+          _cursor = escape.begin() + 1;
+          RE *r = parse_charset();
+          _cursor = new_cursor;
+          return r;
+        }
         default:
             throw ParseFailure("Internal error");
-    }
+        }
 }
 
 codepoint_t RE_Parser::parse_utf8_codepoint() {
