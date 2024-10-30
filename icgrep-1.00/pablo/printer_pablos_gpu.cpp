@@ -146,7 +146,7 @@ static std::string getGPUInst(uint32_t n_inst, std::string operation,
                        operation, operand1_idx, operand2, dest_idx);
   }
 
-  if (operation == "IF") {
+  if (operation == "IF" || operation == "WHILE") {
     uint32_t operand1_idx;
     get_operand_idx(operand1, operand1_idx, map_variable);
     return std::format("ri[{0}].init(Re_Inst::{1}, {2}, {3}, {4});", n_inst,
@@ -238,9 +238,14 @@ void PabloPrinter::printGPU(const Statement * stmt, std::string indent, std::ost
       n_inst++;
     }
     else if (const Next * next = dyn_cast<const Next>(stmt)) {        
-        strm << "Next(" << next->getName() << ") = ";
-        print(next->getExpr(), strm);
-        throw std::runtime_error("Error: Next not supported");
+        // strm << "Next(" << next->getName() << ") = ";
+        // print(next->getExpr(), strm);
+        // throw std::runtime_error("Error: Next not supported");
+        std::string operand1, dest;
+        dest = getExprName(next);
+        operand1 = getExprName(next->getExpr());
+        strm << getGPUInst(n_inst, "ASSIGN", operand1, dest, map_variable);
+        n_inst++;
     }
     else if (const If * ifstmt = dyn_cast<const If>(stmt)) {
         printGPU_vars(ifstmt->getDefined(), indent + "", strm);
@@ -253,7 +258,7 @@ void PabloPrinter::printGPU(const Statement * stmt, std::string indent, std::ost
         printGPU(ifstmt->getBody(), indent + "  ", bodyos);
         pos_true = std::to_string(pos_if + 1);
         pos_false = std::to_string(n_inst);
-        strm << indent;
+        // strm << indent;
         strm << getGPUInst(pos_if, "IF", condition, pos_true, pos_false,
                           map_variable);
         strm << "  // " << "if ";
@@ -262,11 +267,21 @@ void PabloPrinter::printGPU(const Statement * stmt, std::string indent, std::ost
         strm << bodyos.str();
     }
     else if (const While * whl = dyn_cast<const While>(stmt)) {
-        strm << "while ";
+        std::string condition, pos_true, pos_false;
+        condition = getExprName(whl->getCondition());
+        uint32_t pos_while = n_inst;
+        n_inst++;
+        std::ostringstream bodyos;
+        printGPU(whl->getBody(), indent + "  ", bodyos);
+        pos_true = std::to_string(pos_while + 1);
+        pos_false = std::to_string(n_inst);
+        // strm << indent;
+        strm << getGPUInst(pos_while, "WHILE", condition, pos_true, pos_false,
+                          map_variable);
+        strm << "  // " << "while ";
         print(whl->getCondition(), strm);
-        strm << ":" << std::endl;
-        print(whl->getBody(), indent + "  ", strm);
-        throw std::runtime_error("Error: While not supported");
+        strm << "\n";               
+        strm << bodyos.str();
     }
     else if (const Call * pablo_call = dyn_cast<const Call>(stmt)) {
         print(pablo_call, strm);
@@ -334,7 +349,7 @@ void PabloPrinter::printGPU(const Statement * stmt, std::string indent, std::ost
       strm << indent << "**UNKNOWN Pablo Statement type **" << std::endl;
     }
 
-    if (!isa<const If>(stmt)) {
+    if (!isa<const If>(stmt) && !isa<const While>(stmt)) {
       strm << "  // ";
       print(stmt, "", strm);
     }
