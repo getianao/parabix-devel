@@ -309,15 +309,13 @@ void PabloPrinter::printGPU(const Statement * stmt, std::string indent, std::ost
       strm << getGPUInst(n_inst, "XOR", operand1, operand2, dest, map_variable);
       n_inst++;
     } else if (const Sel *pablo_sel = dyn_cast<const Sel>(stmt)) {
-      print(pablo_sel, strm);
-      strm << " = (";
-      print(pablo_sel->getCondition(), strm);
-      strm << " ? ";
-      print(pablo_sel->getTrueExpr(), strm);
-      strm << " : ";
-      print(pablo_sel->getFalseExpr(), strm);
-      strm << ")";
-      throw std::runtime_error("Error: Sel not supported");
+      std::string operand1, operand2, operand3, dest;
+      dest = getExprName(pablo_sel);
+      operand1 = getExprName(pablo_sel->getCondition());
+      operand2 = getExprName(pablo_sel->getTrueExpr());
+      operand3 = getExprName(pablo_sel->getFalseExpr());
+      strm << getGPUInst(n_inst, "SEL", operand1, operand2, operand3, dest, map_variable);
+      n_inst++;
     } else if (const Not *pablo_not = dyn_cast<const Not>(stmt)) {
       std::string operand1, dest;
       dest = getExprName(pablo_not);
