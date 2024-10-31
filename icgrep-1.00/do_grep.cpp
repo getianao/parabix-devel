@@ -29,6 +29,7 @@
 // mmap system
 #include <sys/mman.h>
 #include <fcntl.h>
+#include <chrono>
 
 
 #define BUFFER_SEGMENTS 15
@@ -194,7 +195,8 @@ void GrepExecutor::doGrep(const std::string infilename) {
     size_t segment = 0;
     size_t segment_base = 0;
     chars_avail = mFileSize;
-    
+
+    auto startTime = std::chrono::high_resolution_clock::now();    
 //////////////////////////////////////////////////////////////////////////////////////////
 // Full Segments
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -297,6 +299,20 @@ void GrepExecutor::doGrep(const std::string infilename) {
     }
     
     mProcessBlockFcn(basis_bits, carry_q, advance_q, output);
+
+    auto endTime = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
+                        endTime - startTime)
+                        .count();
+    std::cout << "Time: " << duration / 1000.0 << " ms" << std::endl;
+    std::cout << "Filesize: " << mFileSize << " bytes" << std::endl;
+    if (duration > 0) {
+      std::cout << "Throughput: "
+                << (mFileSize / duration * 1e6 / 1024.0 / 1024.0) << " MB/s"
+                << std::endl;
+    } else {
+      std::cout << "Throughput: -1 MB/s" << std::endl;
+    }
 
     if (mCountOnlyOption)
     {
