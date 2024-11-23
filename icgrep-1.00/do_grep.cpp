@@ -138,16 +138,24 @@ bool GrepExecutor::finalLineIsUnterminated() {
     return (static_cast<unsigned char>(mFileBuffer[mFileSize-3]) != 0xE2) || (penult_byte != 0x80);
 }
 
+size_t alignToPageSize(size_t size) {
+  size_t pageSize = sysconf(_SC_PAGESIZE);
+  return (size + pageSize - 1) & ~(pageSize - 1);
+}
+
 void expandBufferWithMmap(char *&mFileBuffer, size_t &mFileSize, int n) {
   if (n <= 0) {
     std::cerr << "Error: n must be greater than 0.\n";
     return;
   }
-
+  const size_t mmap_sentinel_bytes = 2;
   size_t newSize = mFileSize * n;
 
-  char *newBuffer = (char *)mmap(NULL, newSize, PROT_READ | PROT_WRITE,
-                                 MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+  //   newSize = alignToPageSize(newSize);
+
+  char *newBuffer =
+      (char *)mmap(NULL, newSize + mmap_sentinel_bytes, PROT_READ | PROT_WRITE,
+                   MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   if (newBuffer == MAP_FAILED) {
     std::cerr << "Error: Unable to mmap new buffer with errno " << errno
               << ".\n";
@@ -155,10 +163,15 @@ void expandBufferWithMmap(char *&mFileBuffer, size_t &mFileSize, int n) {
   }
 
   for (int i = 0; i < n; ++i) {
+    size_t offset = i * mFileSize;
+    if (offset + mFileSize > newSize) {
+      std::cerr << "Error: Memory copy out of bounds.\n";
+      exit(1);
+    }
     memcpy(newBuffer + i * mFileSize, mFileBuffer, mFileSize);
   }
 
-  munmap(mFileBuffer, mFileSize + 2);
+  munmap(mFileBuffer, mFileSize + mmap_sentinel_bytes);
   mFileBuffer = newBuffer;
   mFileSize = newSize;
 
