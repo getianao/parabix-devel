@@ -72,6 +72,7 @@ int main(int argc, char *argv[]) {
     //static cl::opt<bool>ShowByteOffsets("b", cl::desc("Show the byte offset with each matching line."));
     //cl::alias ShowByteOffsetsLong("-byte-offset", cl::desc("Alias for -b"), cl::aliasopt(ShowByteOffsets));
 
+    cl::opt<int> DuplicateInput("d", cl::desc("Duplicate the input file"), cl::init(1));
     Encoding encoding(Encoding::Type::UTF_8, 8);
 
     cl::ParseCommandLineOptions(argc, argv);
@@ -115,7 +116,7 @@ int main(int argc, char *argv[]) {
             grepEngine.setShowFileNameOption();
         }
         for (unsigned i = firstInputFile; i != inputFiles.size(); ++i) {
-            grepEngine.doGrep(inputFiles[i].c_str());
+            grepEngine.doGrep(inputFiles[i].c_str(), DuplicateInput);
         }
     }
     

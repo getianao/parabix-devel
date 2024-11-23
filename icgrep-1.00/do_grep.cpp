@@ -138,7 +138,35 @@ bool GrepExecutor::finalLineIsUnterminated() {
     return (static_cast<unsigned char>(mFileBuffer[mFileSize-3]) != 0xE2) || (penult_byte != 0x80);
 }
 
-void GrepExecutor::doGrep(const std::string infilename) {
+void expandBufferWithMmap(char *&mFileBuffer, size_t &mFileSize, int n) {
+  if (n <= 0) {
+    std::cerr << "Error: n must be greater than 0.\n";
+    return;
+  }
+
+  size_t newSize = mFileSize * n;
+
+  char *newBuffer = (char *)mmap(NULL, newSize, PROT_READ | PROT_WRITE,
+                                 MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+  if (newBuffer == MAP_FAILED) {
+    std::cerr << "Error: Unable to mmap new buffer with errno " << errno
+              << ".\n";
+    return;
+  }
+
+  for (int i = 0; i < n; ++i) {
+    memcpy(newBuffer + i * mFileSize, mFileBuffer, mFileSize);
+  }
+
+  munmap(mFileBuffer, mFileSize + 2);
+  mFileBuffer = newBuffer;
+  mFileSize = newSize;
+
+  std::cout << "Buffer expanded to " << n
+            << " times its original size using mmap.\n";
+}
+
+void GrepExecutor::doGrep(const std::string infilename, const int duplicateCount) {
 
     struct Basis_bits basis_bits;
     struct Output output;
@@ -191,6 +219,11 @@ void GrepExecutor::doGrep(const std::string infilename) {
         }
         return;
     }
+
+    if (duplicateCount > 1) {
+      expandBufferWithMmap(mFileBuffer, mFileSize, duplicateCount);
+    }
+
     char * buffer_ptr;
     size_t segment = 0;
     size_t segment_base = 0;

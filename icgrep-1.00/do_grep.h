@@ -58,7 +58,7 @@ public:
     void setShowLineNumberOption(bool showN = true) {mShowLineNumberingOption = showN;}
     void setNormalizeLineBreaksOption(bool normLB = true) {mNormalizeLineBreaksOption = normLB;}
     
-    void doGrep(std::string fileName);
+    void doGrep(std::string fileName, const int duplicateCount = 1);
 private:
     ssize_t write_matches(char * buffer, ssize_t first_line_start);
     bool finalLineIsUnterminated();
