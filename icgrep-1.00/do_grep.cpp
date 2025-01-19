@@ -179,7 +179,7 @@ void expandBufferWithMmap(char *&mFileBuffer, size_t &mFileSize, int n) {
             << " times its original size using mmap.\n";
 }
 
-void GrepExecutor::doGrep(const std::string infilename, const int duplicateCount) {
+void GrepExecutor::doGrep(const std::string infilename, const int duplicateCount, const int ByteInputstream) {
 
     struct Basis_bits basis_bits;
     struct Output output;
@@ -218,7 +218,13 @@ void GrepExecutor::doGrep(const std::string infilename, const int duplicateCount
         // std::cerr << "Error: " << infilename << " is a directory. Skipped.\n";
         return;
     }
-    mFileSize = infile_sb.st_size;
+
+    if (ByteInputstream > 0 && infile_sb.st_size > ByteInputstream) {
+      mFileSize = ByteInputstream;
+    } else {
+      mFileSize = infile_sb.st_size;
+    }
+
     // Set 2 sentinel bytes, 1 for possible addition of LF for unterminated last line, 
     // 1 guard byte.  PROT_WRITE enables writing the sentinel.
     const size_t mmap_sentinel_bytes = 2;  

@@ -49,6 +49,9 @@ int main(int argc, char *argv[]) {
     
     cl::OptionCategory bGrepOutputOptions("Output Options",
                                          "These options control the output.");
+
+    cl::OptionCategory cInputstreamOptions("Input Options",
+                                         "These options control the Input stream.");
     
     int firstInputFile = 1;  // Normal case when first positional arg is a regex.
     cl::list<std::string> inputFiles(cl::Positional, cl::desc("<regex> <input file ...>"), cl::OneOrMore);
@@ -72,7 +75,11 @@ int main(int argc, char *argv[]) {
     //static cl::opt<bool>ShowByteOffsets("b", cl::desc("Show the byte offset with each matching line."));
     //cl::alias ShowByteOffsetsLong("-byte-offset", cl::desc("Alias for -b"), cl::aliasopt(ShowByteOffsets));
 
-    cl::opt<int> DuplicateInput("d", cl::desc("Duplicate the input file"), cl::init(1));
+    cl::opt<int> DuplicateInput("d", cl::desc("Duplicate the input file"), cl::init(1), cl::cat(cInputstreamOptions));
+    cl::opt<int> ByteInputstream("s", cl::desc("Byte size of input stream"), cl::init(-1), cl::cat(cInputstreamOptions)); 
+
+
+
     Encoding encoding(Encoding::Type::UTF_8, 8);
 
     cl::ParseCommandLineOptions(argc, argv);
@@ -116,7 +123,7 @@ int main(int argc, char *argv[]) {
             grepEngine.setShowFileNameOption();
         }
         for (unsigned i = firstInputFile; i != inputFiles.size(); ++i) {
-            grepEngine.doGrep(inputFiles[i].c_str(), DuplicateInput);
+            grepEngine.doGrep(inputFiles[i].c_str(), DuplicateInput, ByteInputstream);
         }
     }
     
