@@ -123,19 +123,20 @@ ssize_t GrepExecutor::write_matches(char * buffer, ssize_t first_line_start) {
 }
 
 bool GrepExecutor::finalLineIsUnterminated() {
-    if (mFileSize == 0) return false;
-    unsigned char end_byte = static_cast<unsigned char>(mFileBuffer[mFileSize-1]);
-    // LF through CR are line break characters
-    if ((end_byte >= 0xA) && (end_byte <= 0xD)) return false;
-    // Other line breaks require at least two bytes.
-    if (mFileSize == 1) return true;
-    // NEL  
-    unsigned char penult_byte = static_cast<unsigned char>(mFileBuffer[mFileSize-2]);
-    if ((end_byte == 0x85) && (penult_byte == 0xC2)) return false;
-    if (mFileSize == 2) return true;
-    // LS and PS
-    if ((end_byte < 0xA8) || (end_byte > 0xA9)) return true;
-    return (static_cast<unsigned char>(mFileBuffer[mFileSize-3]) != 0xE2) || (penult_byte != 0x80);
+    return false;
+    // if (mFileSize == 0) return false;
+    // unsigned char end_byte = static_cast<unsigned char>(mFileBuffer[mFileSize-1]);
+    // // LF through CR are line break characters
+    // if ((end_byte >= 0xA) && (end_byte <= 0xD)) return false;
+    // // Other line breaks require at least two bytes.
+    // if (mFileSize == 1) return true;
+    // // NEL  
+    // unsigned char penult_byte = static_cast<unsigned char>(mFileBuffer[mFileSize-2]);
+    // if ((end_byte == 0x85) && (penult_byte == 0xC2)) return false;
+    // if (mFileSize == 2) return true;
+    // // LS and PS
+    // if ((end_byte < 0xA8) || (end_byte > 0xA9)) return true;
+    // return (static_cast<unsigned char>(mFileBuffer[mFileSize-3]) != 0xE2) || (penult_byte != 0x80);
 }
 
 size_t alignToPageSize(size_t size) {
