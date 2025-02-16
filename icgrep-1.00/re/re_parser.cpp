@@ -138,7 +138,7 @@ RE * RE_Parser::parse_next_item() {
                 return parse_charset();
             case '.': // the 'any' metacharacter
                 _cursor++;
-                return makeAny();
+                return makeAnyVASim();
             case '\\':  // escape processing
                 ++_cursor;
                 return parse_escaped();
@@ -400,6 +400,19 @@ RE * makeWordNonBoundary () {
                     makeSeq({makeLookBehindAssertion(wordC), makeLookAheadAssertion(wordC)})});
 }
 
+RE *RE_Parser::makeAnyVASim() {
+  cursor_t new_cursor = _cursor;
+  std::string whitespace = "[\x01-\x09\x0b-\x7f]";
+  _cursor = whitespace.begin() + 1;
+  RE *r = parse_charset();
+  _cursor = new_cursor;
+  return r;
+}
+
+RE *RE_Parser::makeComplementVASim(RE *s) {
+  return makeDiff(makeAnyVASim(), s);
+}
+
 RE * RE_Parser::parse_escaped_set() {
     bool complemented = false;
     RE * s;
@@ -434,7 +447,7 @@ RE * RE_Parser::parse_escaped_set() {
           _cursor = whitespace.begin() + 1;
           RE *r = parse_charset();
           _cursor = new_cursor;
-          return makeComplement(r);
+          return makeComplementVASim(r);
           // return makeComplement(makeDigitSet());
         }
         case 's': {
@@ -454,7 +467,7 @@ RE * RE_Parser::parse_escaped_set() {
           _cursor = whitespace.begin() + 1;
           RE *r = parse_charset();
           _cursor = new_cursor;
-          return makeComplement(r);
+          return makeComplementVASim(r);
           // return makeComplement(makeWhitespaceSet());
         }
         case 'w': {
@@ -474,7 +487,7 @@ RE * RE_Parser::parse_escaped_set() {
           _cursor = escape.begin() + 1;
           RE *r = parse_charset();
           _cursor = new_cursor;
-          return makeComplement(r);
+          return makeComplementVASim(r);
           //   return makeComplement(makeWordSet());
         }
         case 'P':
@@ -486,7 +499,7 @@ RE * RE_Parser::parse_escaped_set() {
             s = parse_property_expression();
             if (_cursor == _end || *_cursor != '}') throw ParseFailure("Malformed property expression");
             ++_cursor;
-            if (complemented) return makeComplement(s);
+            if (complemented) return makeComplementVASim(s);
             else return s;
         case 'h':{
           ++_cursor;
@@ -701,7 +714,7 @@ RE * RE_Parser::parse_charset() {
                         newOperand = caseInsensitize(cc1);
                     }
                 }
-                return negated ? makeComplement(newOperand) : newOperand;
+                return negated ? makeComplementVASim(newOperand) : newOperand;
             }
             case setOpener:
             case posixPropertyOpener: {
@@ -735,7 +748,7 @@ RE * RE_Parser::parse_charset() {
                         _cursor++;
                     }
                     RE * posixSet = parse_property_expression();
-                    if (negated) posixSet = makeComplement(posixSet);
+                    if (negated) posixSet = makeComplementVASim(posixSet);
                     subexprs.push_back(posixSet);
                     lastItemKind = BrackettedSetItem;
                     if (_cursor == _end || *_cursor++ != ':' || _cursor == _end || *_cursor++ != ']')

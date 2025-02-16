@@ -93,6 +93,8 @@ private:
     
     void CC_add_range(CC * cc, codepoint_t lo, codepoint_t hi);
 
+    RE *makeAnyVASim();
+    RE *makeComplementVASim(RE *s);
 private:
 
     cursor_t                    _cursor;

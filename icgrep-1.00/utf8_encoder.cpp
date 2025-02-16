@@ -101,18 +101,19 @@ inline CodePointType UTF8_Encoder::u8byte(const CodePointType codepoint, const u
 }
 
 inline unsigned UTF8_Encoder::lenUTF8(const unsigned cp) {
-    if (cp <= 0x7F) {
-        return 1;
-    }
-    else if (cp <= 0x7FF) {
-        return 2;
-    }
-    else if (cp <= 0xFFFF) {
-        return 3;
-    }
-    else {
-        return 4;
-    }
+    return 1;
+    // if (cp <= 0x7F) {
+    //     return 1;
+    // }
+    // else if (cp <= 0x7FF) {
+    //     return 2;
+    // }
+    // else if (cp <= 0xFFFF) {
+    //     return 3;
+    // }
+    // else {
+    //     return 4;
+    // }
 }
 
 inline unsigned UTF8_Encoder::maxCodePoint(const unsigned length) {
