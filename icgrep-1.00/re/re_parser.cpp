@@ -121,9 +121,16 @@ RE * RE_Parser::parse_next_item() {
             case '^':
                 ++_cursor;
                 return makeStart();
-            case '$':
-                ++_cursor;
-                return makeEnd();
+            case '$': {
+              ++_cursor;
+            //   return makeEnd();
+              cursor_t new_cursor = _cursor;
+              std::string whitespace = "[\n]";
+              _cursor = whitespace.begin() + 1;
+              RE *r = parse_charset();
+              _cursor = new_cursor;
+              return r;
+            }
             case '|': case ')':
                 return nullptr;  // This is ugly.
             case '*': case '+': case '?': case '{': 
@@ -144,7 +151,7 @@ RE * RE_Parser::parse_next_item() {
                 return parse_escaped();
             default:
                 return build_CC(parse_utf8_codepoint());
-        }
+            }
     }
     return re;
 }
