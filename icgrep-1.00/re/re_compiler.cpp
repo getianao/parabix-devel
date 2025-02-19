@@ -473,6 +473,27 @@ MarkerType RE_Compiler::processBoundedRep(RE * repeated, int ub, MarkerType mark
         PabloAST * upperLimitMask = reachable(match, 1, ub, pb);
         PabloAST * cursor = markerVar(AdvanceMarker(marker, InitialPostPositionByte, pb));
         PabloAST * rep_class_var = markerVar(compile(repeated, pb));
+        if (DisableMatchStar) {
+          Assign *whileTest = pb.createAssign("test", cursor);
+          Assign *whileAccum = pb.createAssign("accum", cursor);
+          PabloBlock &wb = PabloBlock::Create(pb);
+          mStarDepth++;
+          PabloAST *loopComputation = markerVar(AdvanceMarker(
+              process(repeated, makeMarker(InitialPostPositionByte, whileTest),
+                      wb),
+              InitialPostPositionByte, wb));
+          Next *nextWhileTest =
+              wb.createNext(whileTest, wb.createAnd(loopComputation,
+                                                    wb.createNot(whileAccum)));
+          Next *nextWhileAccum = wb.createNext(
+              whileAccum, wb.createOr(loopComputation, whileAccum));
+          pb.createWhile(nextWhileTest, wb);
+          mStarDepth--;
+          return makeMarker(
+              InitialPostPositionByte,
+              pb.createAnd(pb.createAssign("unbounded", nextWhileAccum),
+                           upperLimitMask, "bounded"));
+        }
         return makeMarker(InitialPostPositionByte, pb.createAnd(pb.createMatchStar(cursor, rep_class_var), upperLimitMask, "bounded"));
     }
     // Fall through to general case.
