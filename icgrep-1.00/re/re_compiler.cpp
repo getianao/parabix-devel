@@ -234,8 +234,10 @@ MarkerType RE_Compiler::process(RE * re, MarkerType marker, PabloBlock & pb) {
             return makeMarker(InitialPostPositionByte, pb.createAnd(markerVar(m), sol, "sol"));
         }
         else {
-            PabloAST * sol = pb.createNot(pb.createAdvance(pb.createNot(mLineFeed), 1));
-            return makeMarker(FinalPostPositionByte, pb.createAnd(markerVar(m), sol, "sol"));
+            // PabloAST * sol = pb.createNot(pb.createAdvance(pb.createNot(mLineFeed), 1));
+            // return makeMarker(FinalPostPositionByte, pb.createAnd(markerVar(m), sol, "sol"));
+            PabloAST * sol = (pb.createAdvance(mLineFeed, 1));
+            return makeMarker(InitialPostPositionByte, pb.createAnd(markerVar(m), sol, "sol"));
         }
     }
     else if (isa<End>(re)) {
