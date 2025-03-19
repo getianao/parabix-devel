@@ -1252,6 +1252,7 @@ bool GrepEngine::searchAllFiles() {
             llvm::report_fatal_error(llvm::StringRef("Failed to create thread: code ") + std::to_string(rc));
         }
     }
+    auto startTime = std::chrono::high_resolution_clock::now();
     // Main thread also does the work;
     DoGrepThreadMethod();
     for(unsigned i = 1; i < codegen::TaskThreads; ++i) {
@@ -1261,6 +1262,11 @@ bool GrepEngine::searchAllFiles() {
             llvm::report_fatal_error(llvm::StringRef("Failed to join thread: code ") + std::to_string(rc));
         }
     }
+    auto endTime = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
+                        endTime - startTime)
+                        .count();
+    std::cout << "Time: " << duration / 1000.0 << " ms" << std::endl;
     return grepMatchFound;
 }
 
