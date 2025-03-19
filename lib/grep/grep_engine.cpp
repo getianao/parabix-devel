@@ -3,6 +3,7 @@
  *  SPDX-License-Identifier: OSL-3.0
  */
 
+#include <chrono>
 #include <grep/grep_engine.h>
 
 #include <atomic>
@@ -1252,7 +1253,6 @@ bool GrepEngine::searchAllFiles() {
             llvm::report_fatal_error(llvm::StringRef("Failed to create thread: code ") + std::to_string(rc));
         }
     }
-    auto startTime = std::chrono::high_resolution_clock::now();
     // Main thread also does the work;
     DoGrepThreadMethod();
     for(unsigned i = 1; i < codegen::TaskThreads; ++i) {
@@ -1269,6 +1269,7 @@ bool GrepEngine::searchAllFiles() {
 void * GrepEngine::DoGrepThreadMethod() {
 
     unsigned fileIdx = mNextFileToGrep++;
+    auto startTime = std::chrono::high_resolution_clock::now();
     while (fileIdx < mFileGroups.size()) {
 
         const auto grepResult = doGrep(mFileGroups[fileIdx], mResultStrs[fileIdx]);
@@ -1280,6 +1281,9 @@ void * GrepEngine::DoGrepThreadMethod() {
             if (pthread_self() != mEngineThread) {
                 pthread_exit(nullptr);
             }
+            auto endTime = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count();
+            std::cout << "Time: " << duration / 1000.0 << " ms" << std::endl;
             return nullptr;
         }
         fileIdx = mNextFileToGrep++;
@@ -1297,6 +1301,9 @@ void * GrepEngine::DoGrepThreadMethod() {
     if (pthread_self() != mEngineThread) {
         pthread_exit(nullptr);
     }
+    auto endTime = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime).count();
+    std::cout << "Time: " << duration / 1000.0 << " ms" << std::endl;
     while (mNextFileToPrint < mFileGroups.size()) {
         const bool readyToPrint = (mFileStatus[mNextFileToPrint] == FileStatus::GrepComplete);
         if (readyToPrint) {
